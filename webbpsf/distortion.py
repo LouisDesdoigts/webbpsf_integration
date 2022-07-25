@@ -7,6 +7,8 @@ import pysiaf
 from scipy.interpolate import RegularGridInterpolator
 from scipy.ndimage.interpolation import rotate
 
+import pickle as p
+
 def _get_default_siaf(instrument, aper_name):
     """
     Create instance of pysiaf for the input instrument and aperture
@@ -226,10 +228,12 @@ def apply_distortion(hdulist_or_filename=None, fill_value=0):
 
     # Pull default values
     aper = _get_default_siaf(instrument, aper_name)
-
+    
     # Distort grid through interpolation
+    p.dump(psf, open('/Users/louis/Code/PhD/dLux/sandbox/JWST/pre_distortion.p', 'wb'))
     psf_new = distort_image(psf, ext, to_frame='sci', fill_value=fill_value, aper=aper)
-
+    p.dump(psf_new, open('/Users/louis/Code/PhD/dLux/sandbox/JWST/post_distortion.p', 'wb'))
+    
     # Apply data to correct extensions
     psf[ext].data = psf_new
 

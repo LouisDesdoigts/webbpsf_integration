@@ -59,6 +59,8 @@ _log = logging.getLogger('webbpsf')
 
 Filter = namedtuple('Filter', ['name', 'filename', 'default_nlambda'])
 
+import pickle as p
+
 
 class SpaceTelescopeInstrument(poppy.instrument.Instrument):
     """ A generic Space Telescope Instrument class.
@@ -425,6 +427,10 @@ class SpaceTelescopeInstrument(poppy.instrument.Instrument):
 
         # Telescope entrance pupil
         pupil_optic = self._get_telescope_pupil_and_aberrations()
+        
+        # print("Getting pupil optic: {}\n".format(pupil_optic))
+        # print(pupil_optic)
+        
         optsys.add_pupil(pupil_optic)
 
         pupil_rms_wfe_nm = np.sqrt(np.mean(pupil_optic.opd[pupil_optic.amplitude == 1] ** 2)) * 1e9
@@ -434,6 +440,8 @@ class SpaceTelescopeInstrument(poppy.instrument.Instrument):
 
         self.pupil_radius = pupil_optic.pupil_diam / 2.0
 
+        # print("Adding pupil inversion")
+        
         # add coord transform from entrance pupil to exit pupil
         optsys.add_inversion(axis='y', name='OTE exit pupil', hide=True)
 
@@ -442,12 +450,17 @@ class SpaceTelescopeInstrument(poppy.instrument.Instrument):
         # Sign convention: Here we are rotating the *wavefront* so the sign is opposite the _rotation attribute,
         # which gives the V3IdlYangle for the detector rotation.
         if self._rotation is not None:
+            # print("Adding pupil Rotation")
+            # print("Rotation: {}/n".format(self._rotation))
             optsys.add_rotation(-self._rotation, hide=True)
             optsys.planes[-1].wavefront_display_hint = 'intensity'
 
         # Allow instrument subclass to add field-dependent aberrations
         aberration_optic = self._get_aberrations()
         if aberration_optic is not None:
+            
+            # print("Adding pupil aberration: {}/n".format(aberration_optic))
+            # print(aberration_optic)
             optsys.add_pupil(aberration_optic)
 
             try:
@@ -474,6 +487,10 @@ class SpaceTelescopeInstrument(poppy.instrument.Instrument):
                 reference_wavelength=defocus_wavelength,
                 radius=self.pupil_radius
             )
+            
+            # print("Adding defocus through thinlens")
+            # print("# of waves of defocus: {}".format(defocus_waves))
+            
             optsys.add_pupil(optic=lens)
             self._extra_keywords['DEFOCUS'] = (defocus_waves, '# of waves of defocus added')
             self._extra_keywords['DEFOC_WL'] = (defocus_wavelength, 'Wavelength reference for defocus added')
@@ -502,7 +519,11 @@ class SpaceTelescopeInstrument(poppy.instrument.Instrument):
                 if options['parity'].lower() == 'even' and np.remainder(fov_pixels, 2) == 1: fov_pixels += 1
         else:
             pass
-
+        
+        # print("Adding Detector")
+        # print("Pixelscale: {}".format(self.pixelscale))
+        # print("fov_pixels: {}".format(fov_pixels))
+        # print("oversample: {}\n".format(detector_oversample))
         optsys.add_detector(self.pixelscale, fov_pixels=fov_pixels,
                             oversample=detector_oversample,
                             name=self.name + " detector")
@@ -1013,7 +1034,7 @@ class JWInstrument(SpaceTelescopeInstrument):
     def calc_psf(self, outfile=None, source=None, nlambda=None, monochromatic=None,
                  fov_arcsec=None, fov_pixels=None, oversample=None, detector_oversample=None, fft_oversample=None,
                  overwrite=True, display=False, save_intermediates=False, return_intermediates=False,
-                 normalize='first', add_distortion=True, crop_psf=True):
+                 normalize='first', add_distortion=True, crop_psf=True, return_all=False):
         """
         Compute a PSF
 
@@ -1050,7 +1071,10 @@ class JWInstrument(SpaceTelescopeInstrument):
                                                 detector_oversample=detector_oversample, fft_oversample=fft_oversample,
                                                 overwrite=overwrite, display=display,
                                                 save_intermediates=save_intermediates,
-                                                return_intermediates=return_intermediates, normalize=normalize)
+                                                return_intermediates=return_intermediates, normalize=normalize,
+                                                return_all=return_all)
+        
+        # p.dump(psf, open("/Users/louis/Code/PhD/dLux/sandbox/JWST/psf_webbpsf_core.p", 'wb'))
 
         return psf
 
@@ -1079,6 +1103,7 @@ class JWInstrument(SpaceTelescopeInstrument):
         # Add distortion if set in calc_psf
         if add_distortion:
             _log.debug("Adding PSF distortion(s)")
+                        
             if self.image_mask == "LRS slit" and self.pupil_mask == "P750L":
                 raise NotImplementedError("Distortion is not implemented yet for MIRI LRS mode.")
 
@@ -2253,7 +2278,7 @@ class NIRISS(JWInstrument):
 
         self._detectors = {'NIS': 'NIS_CEN'}
         self.detector = self.detector_list[0]
-
+        
     def _addAdditionalOptics(self, optsys, oversample=2):
         """Add NRM or slitless spectroscopy optics for NIRISS.
 
