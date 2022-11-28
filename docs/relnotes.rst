@@ -27,6 +27,32 @@ See https://github.com/spacetelescope/webbpsf/issues for currently open issues a
 Version History and Change Log
 -------------------------------
 
+
+Version 1.1.0
+=============
+*2022 September 23*
+
+*First release with JWST in flight optical performance!*  Updates and tools added after completion of commissioning.
+
+Note, this release requires updating your WebbPSF data files to version 1.1.0. See :ref:`here <data_install>` .
+
+This release's upgraded requirements drop support for Python 3.7, meaning conda installation is temporarily unavailable since the AstroConda channel is not equipped for newer Python versions. Installation with pip works as normal.
+
+**James Webb Space Telescope OTE model improvements**:
+
+ * Add feature to use measured OPDs from wavefront sensing in flight, including retrieval from MAST. See :doc:`jwst_measured_opds`. (:pr:`556`, :pr:`559`, :pr:`560`, :pr:`571` by :user:`mperrin; :pr:`563` by :user:`rcooper295`; :pr:`579` by :user:`obi-wan76`)
+ * Add functions to trend and display wavefronts over time. See :doc:`jwst_measured_opds`.
+ * Updated default line-of-sight jitter for JWST observations to 1 milliarcsecond instead of 6 (1 sigma per axis).
+ * Updated default OPD to be an actual measured on-orbit OPD from early in cycle 1 science operations.
+
+**Software and Package Infrastructure Updates:**
+
+ * Add support for Python 3.10; drop support for Python 3.7 (:pr:`549` by :user:`shanosborne`)
+ * Fixes to a few minor plotting bugs (:pr:`537` by :user:`shanosborne`; :pr:`581`, :pr:`582` by :user:`mperrin`)
+ * Thanks to :user:`jsoref` for contributing :pr:`520` with spelling corrections, and :user:`NaincyKumariKnoldus` for fixing a bad link in the docs.
+ * Add unit test for the coronagraph mask shift option (:pr:`578` by :user:`mperrin`)
+
+
 Version 1.0.0
 =============
 *2021 December 10*
